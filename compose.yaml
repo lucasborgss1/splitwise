@@ -1,0 +1,35 @@
+﻿services:
+  splitwise.api:
+    image: splitwise.api
+    build:
+      context: .
+      dockerfile: src/SplitWise.API/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      splitwise.database:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=splitwise.database;Port=3306;Database=${MYSQL_DATABASE};User=root;Password=${MYSQL_ROOT_PASSWORD};"
+      ASPNETCORE_ENVIRONMENT: Development
+
+  splitwise.database:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mysql_data:
